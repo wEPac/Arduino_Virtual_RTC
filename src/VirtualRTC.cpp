@@ -1,6 +1,11 @@
 /*  ============================================================================
  *  Written by Eric Paquot, 03/2019
  *  ============================================================================
+ *  
+ *  A virtual Real Time Clock to manage Unix Time as reference.
+ *  It will provide dat of the week, leap years, moon phases...
+ *  
+ *  ============================================================================
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -19,6 +24,7 @@
  *
  *  ============================================================================
  */
+ 
 
 
 #include <arduino.h>
@@ -27,7 +33,7 @@
 
 
 
-
+/*/
 VirtualRTC::VirtualRTC(byte summertimeRules)
 {
   UnixTime      = 0;                // 1970/01/01, 1h00:00 Thursday
@@ -41,7 +47,35 @@ VirtualRTC::VirtualRTC()
   wTemperature  = 0xFFFF;           // flag is null for 1st read
   SummerTime    = false;            // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
 }
+//*/
+/*/
+VirtualRTC::VirtualRTC(byte summertimeRules):
+  UnixTime(0),                // 1970/01/01, 1h00:00 Thursday
+  wTemperature(0xFFFF),       // flag is null for 1st read
+  SummerTime(summertimeRules) // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
+{}
 
+VirtualRTC::VirtualRTC():
+  UnixTime(0),                // 1970/01/01, 1h00:00 Thursday
+  wTemperature(0xFFFF),       // flag is null for 1st read
+  SummerTime(false)           // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
+{}
+//*/
+//*
+VirtualRTC::VirtualRTC(byte summertimeRules):
+  SummerTime(summertimeRules) // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
+{}
+
+VirtualRTC::VirtualRTC():
+  VirtualRTC(false)           // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
+{}
+
+VirtualRTC::~VirtualRTC()
+{
+  UnixTime      = 0;          // 1970/01/01, 1h00:00 Thursday
+  wTemperature  = 0xFFFF;     // flag is null for 1st read
+}
+//*/
 
 
 //-----------------------------------------------------------------------
@@ -329,6 +363,10 @@ void VirtualRTC::getTime(struct DateTime *pTbuff)
     }
   }
 }
+
+
+
+// ========================== Temperature
 
 float VirtualRTC::getTemp(bool is_celsius)
 {
