@@ -1,5 +1,6 @@
 /*  ============================================================================
  *  Written by Eric Paquot, 03/2019
+ *  https://github.com/wEPac
  *  ============================================================================
  *  
  *  A virtual Real Time Clock to manage Unix Time as reference.
