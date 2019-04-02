@@ -37,27 +37,27 @@
 /*/
 VirtualRTC::VirtualRTC(byte summertimeRules)
 {
-  UnixTime      = 0;                // 1970/01/01, 1h00:00 Thursday
+  UnixTime      = 0;                // 1970/01/01, 0h00:00 Thursday
   wTemperature  = 0xFFFF;           // flag is null for 1st read
   SummerTime    = summertimeRules;  // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
 }
 
 VirtualRTC::VirtualRTC()
 {
-  UnixTime      = 0;                // 1970/01/01, 1h00:00 Thursday
+  UnixTime      = 0;                // 1970/01/01, 0h00:00 Thursday
   wTemperature  = 0xFFFF;           // flag is null for 1st read
   SummerTime    = false;            // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
 }
 //*/
 /*/
 VirtualRTC::VirtualRTC(byte summertimeRules):
-  UnixTime(0),                // 1970/01/01, 1h00:00 Thursday
+  UnixTime(0),                // 1970/01/01, 0h00:00 Thursday
   wTemperature(0xFFFF),       // flag is null for 1st read
   SummerTime(summertimeRules) // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
 {}
 
 VirtualRTC::VirtualRTC():
-  UnixTime(0),                // 1970/01/01, 1h00:00 Thursday
+  UnixTime(0),                // 1970/01/01, 0h00:00 Thursday
   wTemperature(0xFFFF),       // flag is null for 1st read
   SummerTime(false)           // false:NO SummerTime,   0x01:EU rules,   0x02:US rules
 {}
@@ -73,7 +73,7 @@ VirtualRTC::VirtualRTC():
 
 VirtualRTC::~VirtualRTC()
 {
-  UnixTime      = 0;          // 1970/01/01, 1h00:00 Thursday
+  UnixTime      = 0;          // 1970/01/01, 0h00:00 Thursday
   wTemperature  = 0xFFFF;     // flag is null for 1st read
 }
 //*/
@@ -150,8 +150,8 @@ double VirtualRTC::getMoonPhase(struct DateTime *pTbuff)
   // algorithm adapted from Stephen R. Schmitt's "Lunar Phase Computation program"
   //      http://home.att.net/~srschmitt/lunarphasecalc.html
   
-  long   JD = getJulianDate(pTbuff);    // Julian Date at 12h UT
-  double AG, IP;                        // Moon's Age, Moon's Phase
+  long   JD = getJulianDate(pTbuff);        // Julian Date at 12h UT
+  double AG, IP;                            // Moon's Age, Moon's Phase
   
   // calculate moon's age in days (start at zero)
   IP  = normalize((JD - 2451550.1) / 29.530588853);
@@ -243,7 +243,7 @@ bool VirtualRTC::getSummerTime(struct DateTime *pTbuff, bool isUTC)
     day_ref  = (day_ref + year_ref) % 7;
     day_ref  = ((US_rules) ? 14 : 31) - day_ref;    // day in march for summerTime
     //if ((pTbuff->d > day_ref) || (pTbuff->d == day_ref && pTbuff->hh >= 2 - isUTC))             // day to add 1h
-    if ((pTbuff->d > day_ref) || (pTbuff->d == day_ref && pTbuff->hh >= 2))             // day to add 1h
+    if ((pTbuff->d > day_ref) || (pTbuff->d == day_ref && pTbuff->hh >= 2))                     // day to add 1h
       return 1;    // at 2h AM
   }
   else                        // for october
@@ -279,7 +279,7 @@ byte VirtualRTC::getDayOfWeek(struct DateTime *pTbuff)
 
   bool          isSummerTime = getSummerTime(pTbuff, false);
   unsigned long time = (UnixTime + ((isSummerTime) ? 3600L : 0)) / 86400;
-  return ((time + 4) % 7) + 1;  // 1~7, Unix Time 1970/01/[01], 1h00:00 [Thursday](+4), 1st day is Sunday => +1
+  return ((time + 4) % 7) + 1;  // 1~7, Unix Time 1970/01/[01], 0h00:00 [Thursday](+4), 1st day is Sunday => +1
 }
 
 void VirtualRTC::setTime(struct DateTime *pTbuff)
@@ -294,20 +294,19 @@ void VirtualRTC::setTime(struct DateTime *pTbuff)
   int i;
   UnixTime = 0;
   
-  i = pTbuff->y;                                      // 1970~xxxx, Unix Time [1970]/01/01, 1h00:00 Thursday
+  i = pTbuff->y;                                      // 1970~xxxx, Unix Time [1970]/01/01, 0h00:00 Thursday
   while (i-- > 1970) UnixTime += ((isLeapYear(i) ? 366 : 365) * SECS_PER_DAY);
   
-  i = pTbuff->m;                                      // 1~12,      Unix Time 1970/[01]/01, 1h00:00 Thursday
+  i = pTbuff->m;                                      // 1~12,      Unix Time 1970/[01]/01, 0h00:00 Thursday
   while (--i)        UnixTime += getDaysInMonth(i, isLeapYear(pTbuff->y)) * SECS_PER_DAY;
   
-  UnixTime += (pTbuff->d  - 1) * SECS_PER_DAY;        // 1~31,      Unix Time 1970/01/[01], 1h00:00 Thursday
+  UnixTime += (pTbuff->d  - 1) * SECS_PER_DAY;        // 1~31,      Unix Time 1970/01/[01], 0h00:00 Thursday
   
-  UnixTime += (pTbuff->hh - 1) * SECS_PER_HOUR;       // 0~23,      Unix Time 1970/01/01, [1h]00:00 Thursday
+  UnixTime += (pTbuff->hh - 1) * SECS_PER_HOUR;       // 1~24,      Unix Time 1970/01/01, [0h]00:00 Thursday
   UnixTime +=  pTbuff->mm      * SECS_PER_MIN;
   UnixTime +=  pTbuff->ss;
 
   UnixTime -= getSummerTime(pTbuff, false) * SECS_PER_HOUR;  // if using Summertime, -1h to keep UTC for UnixTime
-  //UnixTime -= getSummerTime(pTbuff, true) * SECS_PER_HOUR;  // if using Summertime, -1h to keep UTC for UnixTime
 }
 
 void VirtualRTC::getTime(struct DateTime *pTbuff)
@@ -321,14 +320,13 @@ void VirtualRTC::getTime(struct DateTime *pTbuff)
   pTbuff->mm   = time % 60;
   time /= 60;
   time += 1;
-  pTbuff->hh   = time % 24;             // 0~23, Unix Time 1970/01/01, [1h]00:00 Thursday
-  //pTbuff->hh   = (time + 1) % 24;       // 0~23, Unix Time 1970/01/01, [1h]00:00 Thursday
+  pTbuff->hh   = time % 24;             // 1~24, Unix Time 1970/01/01, [0h]00:00 Thursday
   time /= 24;
   
-  pTbuff->dow  = ((time +  4) % 7) + 1; // 1~7,  Unix Time 1970/01/[01], 1h00:00 [Thursday]=> +4, 1st day is Sunday => +1
+  pTbuff->dow  = ((time +  4) % 7) + 1; // 1~7,  Unix Time 1970/01/[01], 0h00:00 [Thursday]=> +4, 1st day is Sunday => +1
   
   unsigned long days  = 0;
-  unsigned int  temp  = 1970;           // 1970~xxxx, Unix Time [1970]/01/01, 1h00:00 Thursday
+  unsigned int  temp  = 1970;           // 1970~xxxx, Unix Time [1970]/01/01, 0h00:00 Thursday
   while (time >= (days += (unsigned long)((isLeapYear(temp) ? 366 : 365))))
   {
     ++temp;
@@ -338,7 +336,7 @@ void VirtualRTC::getTime(struct DateTime *pTbuff)
   
   time -= days - (unsigned long)((leap_year) ? 366 : 365); // days in the current year
   days  = 0;
-  temp  = 0;                            // 1~12, Unix Time 1970/[01]/01, 1h00:00 Thursday, month starts at 1 => start with inc
+  temp  = 0;                            // 1~12, Unix Time 1970/[01]/01, 0h00:00 Thursday, month starts at 1 => start with inc
   while (time >= days)
   {
     time -= days;                            
@@ -346,7 +344,7 @@ void VirtualRTC::getTime(struct DateTime *pTbuff)
   }
   pTbuff->m = temp;
   
-  pTbuff->d = time + 1;                 // 1~31, Unix Time 1970/01/[01], 1h00:00 Thursday, month starts at day 1 => +1
+  pTbuff->d = time + 1;                 // 1~31, Unix Time 1970/01/[01], 0h00:00 Thursday, month starts at day 1 => +1
   
   if (getSummerTime(pTbuff, true))      // if using Summertime, +1h from UTC UnixTime
   {
